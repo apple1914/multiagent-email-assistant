@@ -6,7 +6,7 @@ from langgraph.checkpoint.sqlite import SqliteSaver
 from scraping import parse_page
 from openai import OpenAI
 from initial_routers import restream_message,route_to_workflow
-
+import json
 openai_client = OpenAI()
 class BasicTool:
     def __init__(self, callableFunc,name):
@@ -14,7 +14,12 @@ class BasicTool:
         self.name = name
 
     def invoke(self, inputs: dict):
+        print("--------ZAZAZAZA--------")
+        print(inputs)
         return self.callableFunc(**inputs)
+    
+    
+
 class OpenAIAssistant:
     def __init__(self, prompt_text: str, tools_schema:list,assistant_name:str):
         self.prompt_text = prompt_text
@@ -23,6 +28,16 @@ class OpenAIAssistant:
     def __call__(self, state: GraphState):
         messages = state[self.assistant_name+"_messages"]
         first_message = {"role":"system","content":self.prompt_text}
+        
+        
+        # for message in messages:
+        #     message.content
+            
+        #     if type(message) is tuple:
+        #         print(message)
+        #         (role,content) = message
+        #         formatted_messages.append({"role":role,"content":content})
+
         messages = [first_message] + messages
         response = openai_client.chat.completions.create(
             model="gpt-4o",
@@ -30,11 +45,12 @@ class OpenAIAssistant:
             tools=self.tools_schema
         )
         message = response.choices[0].message
+
         tool_calls = message.tool_calls
         content = message.content
         message_obj = {"role":"assistant","content":content,"tool_calls":tool_calls}
-        print("-------------------XXXXXX")
-        print(message_obj)
+        # print("-------------------XXXXXX")
+        # print(message_obj)
         return {self.assistant_name+"_messages": [message_obj]}
     
 class ProtoToolNode:
@@ -47,10 +63,20 @@ class ProtoToolNode:
     def __call__(self, state: GraphState):
         last_msg = state[self.assistant_name+"_messages"][-1]
         outputs = []
-        for tool_call in last_msg.tool_calls:
-            tool_result = self.tools_by_name[tool_call["name"]].invoke(
-                tool_call["args"]
+        for tool_call in last_msg["tool_calls"]:
+            
+            tool_result = self.tools_by_name[tool_call.function.name].invoke(
+                json.loads(tool_call.function.arguments)
             )
+           
+            # outputs.append(
+            #     ToolMessage(
+            #         content=json.dumps(tool_result),
+            #         name=tool_call.function.name,
+            #         tool_call_id=id,
+            #     )
+            # )
+            
             tool_call_id = tool_call.id
             tool_function_name = tool_call.function.name
             

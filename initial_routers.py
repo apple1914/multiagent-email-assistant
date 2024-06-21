@@ -1,6 +1,5 @@
 from typing import Literal
 from graph_state import GraphState
-from langchain_core.messages import  HumanMessage
 
 def route_to_workflow(
     state: GraphState,
@@ -20,6 +19,6 @@ def restream_message(state:GraphState):
         assistant_name = "assistant_one"
     last_user_message = state.get("last_user_message")
     
-    message = HumanMessage(last_user_message)
-    return {assistant_name+"_messages":[message]}
+    # message = HumanMessage(last_user_message)
+    return {assistant_name+"_messages":[{"role":"user","content":last_user_message}]}
 
