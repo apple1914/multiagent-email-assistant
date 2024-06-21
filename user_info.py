@@ -1,5 +1,5 @@
 from langchain_core.tools import tool
-from services.graph_state import GraphState
+from graph_state import GraphState
 @tool
 def fetch_customer_info() -> str:
     "fetch this persons name"

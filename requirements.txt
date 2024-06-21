@@ -3,3 +3,4 @@ langchain
 langgraph
 pydantic
 fastapi
+bs4
